@@ -37,16 +37,9 @@ yarn-error.log*
 # prisma
 /src/generated/prisma
 
-# prisma init skill dumps (use Cursor/plugin skills instead)
-.agents/
-.windsurf/
-skills-lock.json
-
 # vercel
 .vercel
 
 # typescript
 *.tsbuildinfo
 next-env.d.ts
-
-/src/generated/prisma
