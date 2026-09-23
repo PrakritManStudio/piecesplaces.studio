@@ -5,7 +5,8 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useState } from "react";
 
-import { Button } from "@/components/ui/button";
+import { JobTagPicker, TagBadge } from "@/components/job-tag-picker";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { PAYMENT_KINDS } from "@/domain/split";
 import type { PaymentKind } from "@/generated/prisma/enums";
 import { formatJobCode } from "@/lib/job-code";
@@ -19,11 +20,18 @@ import {
   REVIEW_STATUS_LABELS,
   SERVICE_LABELS,
 } from "@/lib/labels";
-import { formatThb, parseThbToSatang } from "@/lib/money";
+import { formatThb, parseThbToSatang, satangToThbInput } from "@/lib/money";
+import { cn } from "@/lib/utils";
 import { useTRPC } from "@/trpc/client";
 
 function todayDateInput() {
   const d = new Date();
+  d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+  return d.toISOString().slice(0, 10);
+}
+
+function toDateInput(date: Date | string) {
+  const d = new Date(date);
   d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
   return d.toISOString().slice(0, 10);
 }
@@ -34,7 +42,10 @@ export default function JobDetailPage() {
   const qc = useQueryClient();
   const job = useQuery(trpc.job.byId.queryOptions({ id }));
   const me = useQuery(trpc.user.me.queryOptions());
+  const tags = useQuery(trpc.tag.list.queryOptions());
   const [msg, setMsg] = useState<string | null>(null);
+  const [tagDraft, setTagDraft] = useState<string[] | null>(null);
+  const [editingPaymentId, setEditingPaymentId] = useState<string | null>(null);
 
   const invalidate = async () => {
     await qc.invalidateQueries(trpc.job.byId.queryFilter({ id }));
@@ -47,9 +58,36 @@ export default function JobDetailPage() {
       onError: (e) => setMsg(e.message),
     }),
   );
+  const updatePayment = useMutation(
+    trpc.payment.update.mutationOptions({
+      onSuccess: async () => {
+        setEditingPaymentId(null);
+        await invalidate();
+      },
+      onError: (e) => setMsg(e.message),
+    }),
+  );
+  const deletePayment = useMutation(
+    trpc.payment.delete.mutationOptions({
+      onSuccess: async () => {
+        setEditingPaymentId(null);
+        await invalidate();
+      },
+      onError: (e) => setMsg(e.message),
+    }),
+  );
   const requestClose = useMutation(
     trpc.job.requestClose.mutationOptions({
       onSuccess: invalidate,
+      onError: (e) => setMsg(e.message),
+    }),
+  );
+  const setTags = useMutation(
+    trpc.job.setTags.mutationOptions({
+      onSuccess: async () => {
+        setTagDraft(null);
+        await invalidate();
+      },
       onError: (e) => setMsg(e.message),
     }),
   );
@@ -105,24 +143,148 @@ export default function JobDetailPage() {
             Artist {j.artistPct}% / Referral {j.referralPct}% / Shop{" "}
             {100 - j.artistPct - j.referralPct}%
           </p>
+          {j.tags.length > 0 ? (
+            <div className="mt-2 flex flex-wrap gap-1">
+              {j.tags.map((jt) => (
+                <TagBadge key={jt.tag.id} name={jt.tag.name} color={jt.tag.color} />
+              ))}
+            </div>
+          ) : null}
         </div>
+        {j.canEdit ? (
+          <Link
+            href={`/jobs/${id}/edit`}
+            className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
+          >
+            แก้ไขงาน
+          </Link>
+        ) : null}
       </div>
 
       {msg ? <p className="text-sm text-destructive">{msg}</p> : null}
+
+      {j.canEdit ? (
+        <section className="space-y-3 rounded-lg border border-border bg-background p-4">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h2 className="font-medium">Tags</h2>
+            {tagDraft ? (
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setTagDraft(null)}
+                >
+                  ยกเลิก
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  disabled={setTags.isPending}
+                  onClick={() => {
+                    setMsg(null);
+                    setTags.mutate({ jobId: id, tagIds: tagDraft });
+                  }}
+                >
+                  บันทึก tags
+                </Button>
+              </div>
+            ) : (
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={() => setTagDraft(j.tags.map((jt) => jt.tag.id))}
+              >
+                แก้ไข tags
+              </Button>
+            )}
+          </div>
+          {tagDraft ? (
+            <JobTagPicker
+              options={tags.data ?? []}
+              value={tagDraft}
+              onChange={setTagDraft}
+            />
+          ) : j.tags.length === 0 ? (
+            <p className="text-sm text-muted-foreground">ยังไม่ได้ติด tag</p>
+          ) : (
+            <div className="flex flex-wrap gap-1">
+              {j.tags.map((jt) => (
+                <TagBadge key={jt.tag.id} name={jt.tag.name} color={jt.tag.color} />
+              ))}
+            </div>
+          )}
+        </section>
+      ) : null}
 
       <section className="space-y-3 rounded-lg border border-border bg-background p-4">
         <h2 className="font-medium">รายการเงิน</h2>
         <ul className="divide-y divide-border text-sm">
           {j.payments.map((p) => (
-            <li key={p.id} className="flex flex-wrap justify-between gap-2 py-2">
-              <span>
-                {PAYMENT_KIND_LABELS[p.kind]} · {formatThb(p.amountSatang)}
-                {p.note ? ` - ${p.note}` : ""}
-                <span className="mt-0.5 block text-muted-foreground">
-                  {new Date(p.receivedAt).toLocaleString("th-TH")}
-                </span>
-              </span>
-              <span className="text-muted-foreground">{REVIEW_STATUS_LABELS[p.status]}</span>
+            <li key={p.id} className="space-y-2 py-2">
+              {editingPaymentId === p.id ? (
+                <PaymentEditForm
+                  kinds={[...kinds]}
+                  initial={{
+                    kind: p.kind,
+                    thb: satangToThbInput(p.amountSatang),
+                    note: p.note ?? "",
+                    receivedAt: toDateInput(p.receivedAt),
+                  }}
+                  pending={updatePayment.isPending || deletePayment.isPending}
+                  onCancel={() => setEditingPaymentId(null)}
+                  onSave={(kind, thb, note, receivedAt) => {
+                    setMsg(null);
+                    const amountSatang = parseThbToSatang(thb);
+                    if (amountSatang == null) {
+                      setMsg("จำนวนเงินไม่ถูกต้อง");
+                      return;
+                    }
+                    updatePayment.mutate({
+                      id: p.id,
+                      kind,
+                      amountSatang,
+                      note: note || null,
+                      receivedAt,
+                    });
+                  }}
+                  onDelete={() => {
+                    setMsg(null);
+                    if (window.confirm("ลบรายการเงินนี้?")) {
+                      deletePayment.mutate({ id: p.id });
+                    }
+                  }}
+                />
+              ) : (
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <span>
+                    {PAYMENT_KIND_LABELS[p.kind]} · {formatThb(p.amountSatang)}
+                    {p.note ? ` - ${p.note}` : ""}
+                    <span className="mt-0.5 block text-muted-foreground">
+                      {new Date(p.receivedAt).toLocaleString("th-TH")}
+                    </span>
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-muted-foreground">
+                      {REVIEW_STATUS_LABELS[p.status]}
+                    </span>
+                    {j.canEdit && p.status === "pending" ? (
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          setMsg(null);
+                          setEditingPaymentId(p.id);
+                        }}
+                      >
+                        แก้ไข
+                      </Button>
+                    ) : null}
+                  </div>
+                </div>
+              )}
             </li>
           ))}
           {j.payments.length === 0 ? (
@@ -313,6 +475,101 @@ function PaymentForm(props: {
       <Button type="submit" size="sm" disabled={props.pending}>
         เพิ่ม
       </Button>
+    </form>
+  );
+}
+
+function PaymentEditForm(props: {
+  kinds: PaymentKind[];
+  initial: { kind: PaymentKind; thb: string; note: string; receivedAt: string };
+  pending: boolean;
+  onSave: (kind: PaymentKind, thb: string, note: string, receivedAt: Date) => void;
+  onCancel: () => void;
+  onDelete: () => void;
+}) {
+  const [kind, setKind] = useState<PaymentKind>(props.initial.kind);
+  const [thb, setThb] = useState(props.initial.thb);
+  const [note, setNote] = useState(props.initial.note);
+  const [receivedAt, setReceivedAt] = useState(props.initial.receivedAt);
+  const kindOptions = props.kinds.includes(props.initial.kind)
+    ? props.kinds
+    : [props.initial.kind, ...props.kinds];
+
+  return (
+    <form
+      className="space-y-2 rounded-md border border-border bg-muted/30 p-3"
+      onSubmit={(e) => {
+        e.preventDefault();
+        props.onSave(kind, thb, note, new Date(receivedAt));
+      }}
+    >
+      <div className="flex flex-wrap items-end gap-2">
+        <label className="text-sm">
+          <span className="text-muted-foreground">ชนิด</span>
+          <select
+            className="mt-1 block rounded-md border border-input bg-background px-2 py-1.5 text-sm"
+            value={kind}
+            onChange={(e) => setKind(e.target.value as PaymentKind)}
+          >
+            {kindOptions.map((k) => (
+              <option key={k} value={k}>
+                {PAYMENT_KIND_LABELS[k]}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="text-sm">
+          <span className="text-muted-foreground">วันที่รับเงิน</span>
+          <input
+            className="mt-1 block rounded-md border border-input bg-background px-2 py-1.5 text-sm"
+            type="date"
+            required
+            value={receivedAt}
+            onChange={(e) => setReceivedAt(e.target.value)}
+          />
+        </label>
+        <label className="text-sm">
+          <span className="text-muted-foreground">บาท</span>
+          <input
+            className="mt-1 block w-28 rounded-md border border-input bg-background px-2 py-1.5 text-sm"
+            required
+            inputMode="decimal"
+            value={thb}
+            onChange={(e) => setThb(e.target.value)}
+          />
+        </label>
+        <label className="min-w-[8rem] flex-1 text-sm">
+          <span className="text-muted-foreground">โน้ต</span>
+          <input
+            className="mt-1 block w-full rounded-md border border-input bg-background px-2 py-1.5 text-sm"
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+          />
+        </label>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        <Button type="submit" size="sm" disabled={props.pending}>
+          บันทึก
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          disabled={props.pending}
+          onClick={props.onCancel}
+        >
+          ยกเลิก
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant="destructive"
+          disabled={props.pending}
+          onClick={props.onDelete}
+        >
+          ลบ
+        </Button>
+      </div>
     </form>
   );
 }

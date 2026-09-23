@@ -41,6 +41,65 @@ export const paymentRouter = createTRPCRouter({
       });
     }),
 
+  update: protectedProcedure
+    .input(
+      z.object({
+        id,
+        kind: z.enum(PaymentKind),
+        amountSatang: satang,
+        receivedAt: z.coerce.date(),
+        note: optionalText,
+        evidenceUrl,
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const payment = await ctx.prisma.paymentEntry.findUnique({
+        where: { id: input.id },
+      });
+      if (!payment) throw new TRPCError({ code: "NOT_FOUND" });
+      if (payment.status !== "pending") {
+        badRequest("แก้ได้เฉพาะรายการที่รออนุมัติ");
+      }
+      const job = await loadJob(ctx, payment.jobId, "edit");
+      if (!PAYMENT_KINDS[job.guestEngagement].includes(input.kind)) {
+        badRequest("ชนิดรายการเงินนี้ใช้กับประเภทงานนี้ไม่ได้");
+      }
+      if (isInbound(input.kind) && job.status === "closed") {
+        badRequest("งานปิดแล้ว แก้รายการรับเงินไม่ได้");
+      }
+      const { count } = await ctx.prisma.paymentEntry.updateMany({
+        where: { id: input.id, status: "pending" },
+        data: {
+          kind: input.kind,
+          amountSatang: input.amountSatang,
+          receivedAt: input.receivedAt,
+          note: input.note ?? null,
+          evidenceUrl: input.evidenceUrl ?? null,
+        },
+      });
+      if (count !== 1) {
+        throw new TRPCError({ code: "CONFLICT", message: "รายการนี้ถูกตัดสินแล้ว" });
+      }
+      return ctx.prisma.paymentEntry.findUniqueOrThrow({ where: { id: input.id } });
+    }),
+
+  delete: protectedProcedure.input(z.object({ id })).mutation(async ({ ctx, input }) => {
+    const payment = await ctx.prisma.paymentEntry.findUnique({
+      where: { id: input.id },
+    });
+    if (!payment) throw new TRPCError({ code: "NOT_FOUND" });
+    if (payment.status !== "pending") {
+      badRequest("ลบได้เฉพาะรายการที่รออนุมัติ");
+    }
+    await loadJob(ctx, payment.jobId, "edit");
+    const { count } = await ctx.prisma.paymentEntry.deleteMany({
+      where: { id: input.id, status: "pending" },
+    });
+    if (count !== 1) {
+      throw new TRPCError({ code: "CONFLICT", message: "รายการนี้ถูกตัดสินแล้ว" });
+    }
+  }),
+
   listForJob: protectedProcedure
     .input(z.object({ jobId: id }))
     .query(async ({ ctx, input }) => {
