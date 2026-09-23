@@ -4,13 +4,14 @@ import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useState } from "react";
 
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { formatJobCode } from "@/lib/job-code";
 import {
   ENGAGEMENT_LABELS,
   JOB_STATUS_LABELS,
   SERVICE_LABELS,
 } from "@/lib/labels";
+import { cn } from "@/lib/utils";
 import { useTRPC } from "@/trpc/client";
 
 export default function JobsPage() {
@@ -43,9 +44,9 @@ export default function JobsPage() {
               ))}
             </div>
           ) : null}
-          <Button nativeButton={false} render={<Link href="/jobs/new" />}>
+          <Link href="/jobs/new" className={cn(buttonVariants())}>
             สร้างงาน
-          </Button>
+          </Link>
         </div>
       </div>
 

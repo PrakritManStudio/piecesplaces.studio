@@ -67,11 +67,7 @@ export function StaffSidebar(props: {
                     : pathname === l.href || pathname.startsWith(`${l.href}/`);
                 return (
                   <SidebarMenuItem key={l.href}>
-                    <SidebarMenuButton
-                      isActive={active}
-                      tooltip={l.label}
-                      render={<Link href={l.href} />}
-                    >
+                    <SidebarMenuButton isActive={active} render={<Link href={l.href} />}>
                       <Icon />
                       <span>{l.label}</span>
                     </SidebarMenuButton>
