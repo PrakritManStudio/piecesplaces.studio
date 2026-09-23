@@ -11,7 +11,7 @@ export default async function StaffLayout({
 
   return (
     <TooltipProvider>
-      <SidebarProvider>
+      <SidebarProvider className="min-h-svh">
         <StaffSidebar
           user={{
             name: session.user.name,
@@ -19,12 +19,14 @@ export default async function StaffLayout({
             isAdmin,
           }}
         />
-        <SidebarInset className="bg-zinc-50">
-          <header className="flex h-12 items-center gap-2 border-b border-border px-4 md:hidden">
-            <SidebarTrigger />
-            <span className="text-sm font-semibold">Pieces Places</span>
+        <SidebarInset className="min-w-0 bg-zinc-50">
+          <header className="sticky top-0 z-20 flex h-14 items-center gap-3 border-b border-border bg-background/95 px-3 backdrop-blur supports-backdrop-filter:bg-background/80 md:hidden">
+            <SidebarTrigger className="size-10 shrink-0" />
+            <span className="truncate text-base font-semibold">Pieces Places</span>
           </header>
-          <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6">{children}</main>
+          <main className="mx-auto w-full max-w-5xl flex-1 px-3 py-4 md:px-4 md:py-6">
+            {children}
+          </main>
         </SidebarInset>
       </SidebarProvider>
     </TooltipProvider>

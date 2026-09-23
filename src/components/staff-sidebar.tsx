@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 import {
   Sidebar,
@@ -24,9 +25,10 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
-  SidebarTrigger,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { authClient } from "@/lib/auth-client";
+import { cn } from "@/lib/utils";
 
 const links = [
   { href: "/jobs", label: "งาน", icon: BriefcaseIcon },
@@ -42,23 +44,36 @@ export function StaffSidebar(props: {
 }) {
   const pathname = usePathname();
   const router = useRouter();
+  const { setOpenMobile, isMobile } = useSidebar();
   const visible = links.filter((l) => !("admin" in l && l.admin) || props.user.isAdmin);
+
+  useEffect(() => {
+    setOpenMobile(false);
+  }, [pathname, setOpenMobile]);
+
+  function closeMobile() {
+    if (isMobile) setOpenMobile(false);
+  }
 
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader className="border-b border-sidebar-border">
-        <div className="flex items-center gap-2 px-2 py-1.5">
-          <SidebarTrigger className="md:hidden" />
-          <Link href="/jobs" className="truncate text-sm font-semibold tracking-tight">
-            Pieces Places
-          </Link>
-        </div>
+        <Link
+          href="/jobs"
+          onClick={closeMobile}
+          className="flex h-12 items-center gap-2 px-3 text-base font-semibold tracking-tight group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0 md:h-10 md:px-2 md:text-sm"
+        >
+          <span className="truncate group-data-[collapsible=icon]:hidden">Pieces Places</span>
+          <span className="hidden size-8 items-center justify-center rounded-md bg-sidebar-accent text-xs font-bold group-data-[collapsible=icon]:flex">
+            PP
+          </span>
+        </Link>
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel>เมนู</SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="gap-1">
               {visible.map((l) => {
                 const Icon = l.icon;
                 const active =
@@ -67,7 +82,12 @@ export function StaffSidebar(props: {
                     : pathname === l.href || pathname.startsWith(`${l.href}/`);
                 return (
                   <SidebarMenuItem key={l.href}>
-                    <SidebarMenuButton isActive={active} render={<Link href={l.href} />}>
+                    <SidebarMenuButton
+                      isActive={active}
+                      size="lg"
+                      className={cn("h-11 md:h-8", active && "bg-sidebar-accent font-medium")}
+                      render={<Link href={l.href} onClick={closeMobile} />}
+                    >
                       <Icon />
                       <span>{l.label}</span>
                     </SidebarMenuButton>
@@ -78,17 +98,17 @@ export function StaffSidebar(props: {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      <SidebarFooter className="border-t border-sidebar-border">
+      <SidebarFooter className="border-t border-sidebar-border gap-2">
+        <div className="truncate px-3 py-1 text-sm text-muted-foreground md:px-2 md:text-xs">
+          {props.user.name}
+        </div>
         <SidebarMenu>
           <SidebarMenuItem>
-            <div className="truncate px-2 py-1 text-xs text-muted-foreground">
-              {props.user.name}
-            </div>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
             <SidebarMenuButton
-              tooltip="ออกจากระบบ"
+              size="lg"
+              className="h-11 md:h-8"
               onClick={async () => {
+                closeMobile();
                 await authClient.signOut();
                 router.push("/login");
                 router.refresh();
