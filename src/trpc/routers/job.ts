@@ -10,6 +10,7 @@ import {
   toCloseInput,
 } from "@/domain/split";
 import { CloseOutcome, JobStatus, ServiceType } from "@/generated/prisma/enums";
+import { nextJobNo } from "@/lib/job-code";
 import { badRequest, loadJob } from "@/trpc/job-access";
 import { adminProcedure, createTRPCRouter, protectedProcedure } from "@/trpc/init";
 import { id, optionalText, pct, reason, satang } from "@/trpc/schemas";
@@ -185,15 +186,19 @@ export const jobRouter = createTRPCRouter({
     const collaboratorIds = new Set(input.collaboratorIds);
     if (data.ownerUserId !== ctx.user.id) collaboratorIds.add(ctx.user.id);
 
-    return ctx.prisma.job.create({
-      data: {
-        ...data,
-        createdById: ctx.user.id,
-        collaborators: {
-          create: [...collaboratorIds].map((userId) => ({ userId })),
+    return ctx.prisma.$transaction(async (tx) => {
+      const agg = await tx.job.aggregate({ _max: { jobNo: true } });
+      return tx.job.create({
+        data: {
+          ...data,
+          jobNo: nextJobNo(agg._max.jobNo),
+          createdById: ctx.user.id,
+          collaborators: {
+            create: [...collaboratorIds].map((userId) => ({ userId })),
+          },
         },
-      },
-    });
+      });
+    }, TX_OPTIONS);
   }),
 
   update: protectedProcedure

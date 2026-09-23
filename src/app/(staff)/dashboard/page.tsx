@@ -67,7 +67,7 @@ export default function DashboardPage() {
 
       {s ? (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <Card title="งานปิด (approved close)" value={String(s.totals.jobs)} />
+          <Card title="งานปิด (อนุมัติปิดแล้ว)" value={String(s.totals.jobs)} />
           <Card title="ฐานรวม" value={formatThb(s.totals.baseSatang)} />
           <Card title="ส่วนร้าน (shop)" value={formatThb(s.totals.shopSatang)} />
           <Card title="ค่าใช้จ่ายอนุมัติ" value={formatThb(s.expenses.totalSatang)} />

@@ -25,20 +25,12 @@ import {
 import { Input } from "@/components/ui/input";
 import { shopPct } from "@/domain/split";
 import type { GuestEngagement, ServiceType } from "@/generated/prisma/enums";
+import { SERVICE_LABELS } from "@/lib/labels";
 import { cn } from "@/lib/utils";
 import { useTRPC } from "@/trpc/client";
 
 const selectClassName =
   "h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50";
-
-const SERVICE_LABELS: Record<ServiceType, string> = {
-  tattoo: "สัก",
-  nail: "ทำเล็บ",
-  lash: "ต่อขนตา",
-  class: "คลาส",
-  other: "อื่นๆ",
-};
-
 
 const templateFormSchema = z
   .object({
@@ -66,6 +58,7 @@ type TemplateRow = {
   guestEngagement: GuestEngagement;
   artistPct: number;
   referralPct: number;
+  active?: boolean;
 };
 
 type EditorMode =
@@ -83,15 +76,21 @@ export function SplitTemplateManager(props: {
   engagement: GuestEngagement;
   selectedId: string;
   onSelect: (template: TemplateRow | null) => void;
+  editable?: boolean;
 }) {
+  const editable = props.editable ?? true;
   const trpc = useTRPC();
   const qc = useQueryClient();
-  const templates = useQuery(trpc.splitTemplate.list.queryOptions());
+  const templates = useQuery(
+    trpc.splitTemplate.list.queryOptions(
+      editable ? { includeInactive: true } : undefined,
+    ),
+  );
   const [editor, setEditor] = useState<EditorMode>({ kind: "closed" });
   const [actionError, setActionError] = useState<string | null>(null);
 
   const filtered = (templates.data ?? []).filter(
-    (t) => t.guestEngagement === props.engagement,
+    (t) => t.guestEngagement === props.engagement && (editable || t.active),
   );
 
   async function invalidate() {
@@ -171,18 +170,20 @@ export function SplitTemplateManager(props: {
     <div className="space-y-2">
       <div className="flex items-center justify-between gap-2">
         <span className="text-sm text-muted-foreground">หมวด (template)</span>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={() => {
-            setActionError(null);
-            setEditor({ kind: "create" });
-          }}
-        >
-          <PlusIcon />
-          เพิ่มหมวด
-        </Button>
+        {editable ? (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setActionError(null);
+              setEditor({ kind: "create" });
+            }}
+          >
+            <PlusIcon />
+            เพิ่มหมวด
+          </Button>
+        ) : null}
       </div>
 
       <ul className="divide-y divide-border overflow-hidden rounded-lg border border-border">
@@ -202,42 +203,49 @@ export function SplitTemplateManager(props: {
                 className="min-w-0 flex-1 text-left"
                 onClick={() => props.onSelect(t)}
               >
-                <p className="font-medium">{t.label}</p>
+                <p className="font-medium">
+                  {t.label}
+                  {editable && t.active === false ? " (ปิดใช้)" : ""}
+                </p>
                 <p className="text-muted-foreground">
                   {SERVICE_LABELS[t.serviceType]} · Artist {t.artistPct}% · Referral{" "}
                   {t.referralPct}% · ร้าน {shop}%
                 </p>
               </button>
-              <div className="flex shrink-0 gap-1">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon-sm"
-                  aria-label={`แก้ไข ${t.label}`}
-                  onClick={() => {
-                    setActionError(null);
-                    setEditor({ kind: "edit", template: t });
-                  }}
-                >
-                  <PencilIcon />
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon-sm"
-                  aria-label={`ลบ ${t.label}`}
-                  onClick={() => void handleRemove(t)}
-                  disabled={remove.isPending || deactivate.isPending}
-                >
-                  <TrashIcon />
-                </Button>
-              </div>
+              {editable ? (
+                <div className="flex shrink-0 gap-1">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-sm"
+                    aria-label={`แก้ไข ${t.label}`}
+                    onClick={() => {
+                      setActionError(null);
+                      setEditor({ kind: "edit", template: t });
+                    }}
+                  >
+                    <PencilIcon />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-sm"
+                    aria-label={`ลบ ${t.label}`}
+                    onClick={() => void handleRemove(t)}
+                    disabled={remove.isPending || deactivate.isPending}
+                  >
+                    <TrashIcon />
+                  </Button>
+                </div>
+              ) : null}
             </li>
           );
         })}
         {filtered.length === 0 ? (
           <li className="px-3 py-6 text-center text-sm text-muted-foreground">
-            ยังไม่มีหมวดสำหรับประเภทนี้ — กดเพิ่มหมวดเพื่อตั้ง % เริ่มต้น
+            {editable
+              ? "ยังไม่มีหมวดสำหรับประเภทนี้ — กดเพิ่มหมวดเพื่อตั้ง % เริ่มต้น"
+              : "ยังไม่มีหมวด ให้ admin ไปตั้งค่าที่เมนูตั้งค่า"}
           </li>
         ) : null}
       </ul>

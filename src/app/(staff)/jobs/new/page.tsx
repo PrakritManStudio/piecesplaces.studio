@@ -20,18 +20,11 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { shopPct } from "@/domain/split";
 import type { GuestEngagement, ServiceType } from "@/generated/prisma/enums";
-import { parseThbToSatang } from "@/lib/money";
+import { ENGAGEMENT_LABELS } from "@/lib/labels";
 import { useTRPC } from "@/trpc/client";
 
 const selectClassName =
   "h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50";
-
-const ENGAGEMENT_LABELS: Record<GuestEngagement, string> = {
-  none: "ช่างประจำ",
-  guest_sourced: "Guest A — หาลูกค้าเอง",
-  shop_overflow: "Guest B — ร้านส่งงาน",
-};
-
 
 function defaultScheduledAt() {
   const d = new Date();
@@ -50,7 +43,6 @@ const jobFormSchema = z
     referralUserId: z.string(),
     artistPct: z.number().int().min(0).max(100),
     referralPct: z.number().int().min(0).max(100),
-    estimateThb: z.string(),
     customerName: z.string(),
     styleNote: z.string(),
     serviceType: z.enum(["tattoo", "nail", "lash", "class", "other"]),
@@ -68,13 +60,6 @@ const jobFormSchema = z
         code: "custom",
         message: "เลือก Guest profile",
         path: ["ownerGuestId"],
-      });
-    }
-    if (value.estimateThb.trim() && parseThbToSatang(value.estimateThb) == null) {
-      ctx.addIssue({
-        code: "custom",
-        message: "ยอดประมาณการไม่ถูกต้อง",
-        path: ["estimateThb"],
       });
     }
   });
@@ -111,7 +96,6 @@ export default function NewJobPage() {
       referralUserId: "",
       artistPct: 60,
       referralPct: 0,
-      estimateThb: "",
       customerName: "",
       styleNote: "",
       serviceType: "tattoo" as ServiceType,
@@ -121,13 +105,6 @@ export default function NewJobPage() {
     },
     onSubmit: ({ value }) => {
       setSubmitError(null);
-      const estimated = value.estimateThb.trim()
-        ? parseThbToSatang(value.estimateThb)
-        : null;
-      if (value.estimateThb.trim() && estimated == null) {
-        setSubmitError("ยอดประมาณการไม่ถูกต้อง");
-        return;
-      }
 
       const base = {
         title: value.title,
@@ -135,7 +112,6 @@ export default function NewJobPage() {
         scheduledAt: new Date(value.scheduledAt),
         styleNote: value.styleNote || null,
         customerName: value.customerName || null,
-        estimatedTotalSatang: estimated,
         splitTemplateId: value.templateId || null,
         artistPct: value.artistPct,
         referralPct: value.engagement === "none" ? value.referralPct : 0,
@@ -236,6 +212,7 @@ export default function NewJobPage() {
               <SplitTemplateManager
                 engagement={engagement}
                 selectedId={templateId}
+                editable={false}
                 onSelect={(template) => {
                   if (!template) {
                     form.setFieldValue("templateId", "");
@@ -475,29 +452,6 @@ export default function NewJobPage() {
                 % (แก้ได้ต่องานหลังเลือกหมวด)
               </p>
             )}
-          />
-
-          <form.Field
-            name="estimateThb"
-            children={(field) => {
-              const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
-              return (
-                <Field data-invalid={isInvalid}>
-                  <FieldLabel htmlFor={field.name}>ยอดประมาณการ (บาท)</FieldLabel>
-                  <Input
-                    id={field.name}
-                    name={field.name}
-                    inputMode="decimal"
-                    placeholder="เช่น 5000"
-                    value={field.state.value}
-                    onBlur={field.handleBlur}
-                    onChange={(e) => field.handleChange(e.target.value)}
-                    aria-invalid={isInvalid}
-                  />
-                  {isInvalid ? <FieldError errors={field.state.meta.errors} /> : null}
-                </Field>
-              );
-            }}
           />
 
           <form.Field

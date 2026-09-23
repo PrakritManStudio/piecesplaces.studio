@@ -4,7 +4,7 @@ import { z } from "zod";
 import { ratesError } from "@/domain/split";
 import { GuestEngagement, ServiceType } from "@/generated/prisma/enums";
 import { badRequest } from "@/trpc/job-access";
-import { createTRPCRouter, protectedProcedure } from "@/trpc/init";
+import { adminProcedure, createTRPCRouter, protectedProcedure } from "@/trpc/init";
 import { id, pct } from "@/trpc/schemas";
 
 const templateFields = z.object({
@@ -50,7 +50,7 @@ export const splitTemplateRouter = createTRPCRouter({
       }),
     ),
 
-  create: protectedProcedure.input(templateCreateInput).mutation(({ ctx, input }) => {
+  create: adminProcedure.input(templateCreateInput).mutation(({ ctx, input }) => {
     assertRates(input);
     const { key: maybeKey, ...data } = input;
     return ctx.prisma.splitTemplate.create({
@@ -61,19 +61,19 @@ export const splitTemplateRouter = createTRPCRouter({
     });
   }),
 
-  update: protectedProcedure.input(templateUpdateInput).mutation(({ ctx, input: { id, ...data } }) => {
+  update: adminProcedure.input(templateUpdateInput).mutation(({ ctx, input: { id, ...data } }) => {
     assertRates(data);
     return ctx.prisma.splitTemplate.update({ where: { id }, data });
   }),
 
-  deactivate: protectedProcedure.input(z.object({ id })).mutation(({ ctx, input }) =>
+  deactivate: adminProcedure.input(z.object({ id })).mutation(({ ctx, input }) =>
     ctx.prisma.splitTemplate.update({
       where: { id: input.id },
       data: { active: false },
     }),
   ),
 
-  delete: protectedProcedure.input(z.object({ id })).mutation(async ({ ctx, input }) => {
+  delete: adminProcedure.input(z.object({ id })).mutation(async ({ ctx, input }) => {
     const used = await ctx.prisma.job.count({ where: { splitTemplateId: input.id } });
     if (used > 0) {
       throw new TRPCError({

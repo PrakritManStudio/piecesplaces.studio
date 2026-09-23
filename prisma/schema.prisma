@@ -186,6 +186,7 @@ model GuestProfile {
 
 model Job {
   id                   String          @id @default(cuid())
+  jobNo                Int             @unique
   title                String
   serviceType          ServiceType
   scheduledAt          DateTime
