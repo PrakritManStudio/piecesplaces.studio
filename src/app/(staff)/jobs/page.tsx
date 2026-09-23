@@ -27,7 +27,7 @@ import { cn } from "@/lib/utils";
 import { useTRPC } from "@/trpc/client";
 
 const selectClassName =
-  "h-11 w-full min-w-0 touch-manipulation rounded-lg border border-input bg-transparent px-2.5 py-1 text-base outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 md:h-8 md:text-sm";
+  "h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50";
 
 const STATUSES = Object.keys(JOB_STATUS_LABELS) as JobStatus[];
 
@@ -72,7 +72,6 @@ export default function JobsPage() {
   );
 
   const jobs = useQuery(trpc.job.list.queryOptions(listInput));
-  const rows = jobs.data ?? [];
 
   function clearFilters() {
     setStatus("");
@@ -95,10 +94,7 @@ export default function JobsPage() {
                 <button
                   key={s}
                   type="button"
-                  className={cn(
-                    "touch-manipulation rounded-md px-3 py-2 md:py-1",
-                    scope === s ? "bg-muted font-medium" : "text-muted-foreground",
-                  )}
+                  className={`rounded-md px-3 py-1 ${scope === s ? "bg-muted font-medium" : "text-muted-foreground"}`}
                   onClick={() => setScope(s)}
                 >
                   {s === "mine" ? "ของฉัน" : "ทั้งหมด"}
@@ -106,10 +102,7 @@ export default function JobsPage() {
               ))}
             </div>
           ) : null}
-          <Link
-            href="/jobs/new"
-            className={cn(buttonVariants(), "touch-manipulation h-11 px-4 md:h-8")}
-          >
+          <Link href="/jobs/new" className={cn(buttonVariants())}>
             สร้างงาน
           </Link>
         </div>
@@ -175,28 +168,18 @@ export default function JobsPage() {
 
         <label className="space-y-1 text-sm">
           <span className="text-muted-foreground">วันนัดตั้งแต่</span>
-          <Input
-            type="date"
-            className="h-11 touch-manipulation text-base md:h-8 md:text-sm"
-            value={from}
-            onChange={(e) => setFrom(e.target.value)}
-          />
+          <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
         </label>
 
         <label className="space-y-1 text-sm">
           <span className="text-muted-foreground">ถึง</span>
-          <Input
-            type="date"
-            className="h-11 touch-manipulation text-base md:h-8 md:text-sm"
-            value={to}
-            onChange={(e) => setTo(e.target.value)}
-          />
+          <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} />
         </label>
 
         <div className="flex items-end">
           <button
             type="button"
-            className="h-11 touch-manipulation text-sm text-muted-foreground underline-offset-2 hover:underline disabled:opacity-40 md:h-8"
+            className="h-8 text-sm text-muted-foreground underline-offset-2 hover:underline disabled:opacity-40"
             disabled={!hasFilters}
             onClick={clearFilters}
           >
@@ -210,61 +193,7 @@ export default function JobsPage() {
         <p className="text-sm text-destructive">{jobs.error.message}</p>
       ) : null}
 
-      {/* Mobile: card list */}
-      <ul className="divide-y divide-border rounded-lg border border-border bg-background md:hidden">
-        {rows.map((job) => (
-          <li key={job.id}>
-            <Link
-              href={`/jobs/${job.id}`}
-              className="block touch-manipulation space-y-1.5 px-4 py-3 active:bg-muted/50"
-            >
-              <div className="flex items-start justify-between gap-2">
-                <p className="font-medium">
-                  <span className="mr-2 text-muted-foreground">
-                    {formatJobCode(job.jobNo)}
-                  </span>
-                  {job.title}
-                </p>
-                <Badge variant="secondary" className="shrink-0">
-                  {JOB_STATUS_LABELS[job.status]}
-                </Badge>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                {job.ownerUser?.name ?? job.ownerGuest?.name ?? "—"} ·{" "}
-                {SERVICE_LABELS[job.serviceType]}
-                {job.guestEngagement !== "none"
-                  ? ` · ${ENGAGEMENT_LABELS[job.guestEngagement]}`
-                  : ""}
-              </p>
-              <p className="text-sm text-muted-foreground">
-                {new Date(job.scheduledAt).toLocaleString("th-TH", {
-                  dateStyle: "medium",
-                  timeStyle: "short",
-                })}
-              </p>
-              {job.tags.length > 0 ? (
-                <div className="flex flex-wrap gap-1 pt-0.5">
-                  {job.tags.map((jt) => (
-                    <TagBadge
-                      key={jt.tag.id}
-                      name={jt.tag.name}
-                      color={jt.tag.color}
-                    />
-                  ))}
-                </div>
-              ) : null}
-            </Link>
-          </li>
-        ))}
-        {rows.length === 0 && !jobs.isLoading ? (
-          <li className="px-4 py-8 text-center text-sm text-muted-foreground">
-            ไม่พบงานตามเงื่อนไข
-          </li>
-        ) : null}
-      </ul>
-
-      {/* Desktop: table */}
-      <div className="hidden overflow-x-auto rounded-lg border border-border bg-background md:block">
+      <div className="overflow-x-auto rounded-lg border border-border bg-background">
         <Table>
           <TableHeader>
             <TableRow>
@@ -277,8 +206,8 @@ export default function JobsPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {rows.map((job) => (
-              <TableRow key={job.id}>
+            {(jobs.data ?? []).map((job) => (
+              <TableRow key={job.id} className="cursor-pointer">
                 <TableCell className="whitespace-nowrap text-muted-foreground">
                   <Link href={`/jobs/${job.id}`} className="hover:underline">
                     {formatJobCode(job.jobNo)}
@@ -323,7 +252,7 @@ export default function JobsPage() {
                 </TableCell>
               </TableRow>
             ))}
-            {rows.length === 0 ? (
+            {jobs.data?.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
                   ไม่พบงานตามเงื่อนไข
