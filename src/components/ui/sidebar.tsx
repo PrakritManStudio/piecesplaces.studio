@@ -7,16 +7,9 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "cn"
 
 import { useIsMobile } from "@/hooks/use-mobile"
-import { Button } from "@/components/ui/button"
+import { buttonVariants } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
   Tooltip,
@@ -155,7 +148,6 @@ function Sidebar({
   collapsible = "offcanvas",
   className,
   children,
-  dir,
   ...props
 }: React.ComponentProps<"div"> & {
   side?: "left" | "right"
@@ -181,27 +173,38 @@ function Sidebar({
 
   if (isMobile) {
     return (
-      <Sheet open={openMobile} onOpenChange={setOpenMobile} {...props}>
-        <SheetContent
-          dir={dir}
-          data-sidebar="sidebar"
+      <>
+        <button
+          type="button"
+          aria-label="Close sidebar"
+          className={cn(
+            "fixed inset-0 z-40 bg-black/40 transition-opacity duration-200 md:hidden",
+            openMobile ? "opacity-100" : "pointer-events-none opacity-0",
+          )}
+          onClick={() => setOpenMobile(false)}
+        />
+        <div
           data-slot="sidebar"
+          data-sidebar="sidebar"
           data-mobile="true"
-          className="w-(--sidebar-width) bg-sidebar p-0 text-sidebar-foreground [&>button]:hidden"
-          style={
-            {
-              "--sidebar-width": SIDEBAR_WIDTH_MOBILE,
-            } as React.CSSProperties
-          }
-          side={side}
+          data-side={side}
+          className={cn(
+            "fixed inset-y-0 z-50 flex h-dvh max-h-dvh w-[min(18rem,85vw)] flex-col bg-sidebar text-sidebar-foreground shadow-xl transition-transform duration-200 ease-out md:hidden",
+            "pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)]",
+            side === "left" ? "left-0" : "right-0",
+            openMobile
+              ? "translate-x-0"
+              : side === "left"
+                ? "-translate-x-full pointer-events-none"
+                : "translate-x-full pointer-events-none",
+            className,
+          )}
         >
-          <SheetHeader className="sr-only">
-            <SheetTitle>Sidebar</SheetTitle>
-            <SheetDescription>Displays the mobile sidebar.</SheetDescription>
-          </SheetHeader>
-          <div className="flex h-full w-full flex-col">{children}</div>
-        </SheetContent>
-      </Sheet>
+          <div className="flex h-full min-h-0 w-full flex-col overflow-hidden">
+            {children}
+          </div>
+        </div>
+      </>
     )
   }
 
@@ -255,25 +258,28 @@ function SidebarTrigger({
   className,
   onClick,
   ...props
-}: React.ComponentProps<typeof Button>) {
+}: React.ComponentProps<"button">) {
   const { toggleSidebar } = useSidebar()
 
   return (
-    <Button
+    <button
+      type="button"
       data-sidebar="trigger"
       data-slot="sidebar-trigger"
-      variant="ghost"
-      size="icon-sm"
-      className={cn(className)}
+      className={cn(
+        buttonVariants({ variant: "ghost", size: "icon-sm" }),
+        "touch-manipulation",
+        className,
+      )}
       onClick={(event) => {
         onClick?.(event)
         toggleSidebar()
       }}
       {...props}
     >
-      <PanelLeftIcon />
+      <PanelLeftIcon className="rtl:rotate-180" />
       <span className="sr-only">Toggle Sidebar</span>
-    </Button>
+    </button>
   )
 }
 
