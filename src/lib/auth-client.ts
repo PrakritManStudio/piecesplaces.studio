@@ -11,3 +11,15 @@ export async function signInWithGoogle(callbackURL = "/") {
     callbackURL,
   });
 }
+
+export async function signInWithEmailPassword(
+  email: string,
+  password: string,
+  callbackURL = "/jobs",
+) {
+  return authClient.signIn.email({
+    email,
+    password,
+    callbackURL,
+  });
+}

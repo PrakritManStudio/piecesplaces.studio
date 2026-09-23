@@ -37,6 +37,18 @@ export const protectedProcedure = t.procedure.use(({ ctx, next }) => {
     ctx: {
       session: ctx.session,
       user: ctx.session.user,
+      isAdmin: isAdmin(ctx.session.user.role),
     },
   });
 });
+
+export const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
+  if (!ctx.isAdmin) {
+    throw new TRPCError({ code: "FORBIDDEN" });
+  }
+  return next();
+});
+
+function isAdmin(role: string | null | undefined) {
+  return role?.split(",").includes("admin") ?? false;
+}

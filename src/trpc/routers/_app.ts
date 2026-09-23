@@ -1,15 +1,22 @@
-import { z } from "zod";
-
-import { createTRPCRouter, publicProcedure } from "@/trpc/init";
+import { createTRPCRouter } from "@/trpc/init";
+import { dashboardRouter } from "@/trpc/routers/dashboard";
+import { expenseRouter } from "@/trpc/routers/expense";
+import { guestProfileRouter } from "@/trpc/routers/guest-profile";
+import { jobRouter } from "@/trpc/routers/job";
+import { paymentRouter } from "@/trpc/routers/payment";
+import { payoutRouter } from "@/trpc/routers/payout";
+import { splitTemplateRouter } from "@/trpc/routers/split-template";
+import { userRouter } from "@/trpc/routers/user";
 
 export const appRouter = createTRPCRouter({
-  hello: publicProcedure
-    .input(z.object({ text: z.string().optional() }))
-    .query(({ input }) => {
-      return {
-        greeting: `hello ${input.text ?? "world"}`,
-      };
-    }),
+  user: userRouter,
+  splitTemplate: splitTemplateRouter,
+  guestProfile: guestProfileRouter,
+  job: jobRouter,
+  payment: paymentRouter,
+  payout: payoutRouter,
+  expense: expenseRouter,
+  dashboard: dashboardRouter,
 });
 
 export type AppRouter = typeof appRouter;

@@ -28,7 +28,7 @@ function getQueryClient() {
 function getBaseUrl() {
   if (typeof window !== "undefined") return "";
   if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
-  return process.env.BETTER_AUTH_URL ?? "http://localhost:3000";
+  return process.env.BETTER_AUTH_URL ?? "https://tunnel-prakrit-3000.patavee.space";
 }
 
 export function TRPCReactProvider(
