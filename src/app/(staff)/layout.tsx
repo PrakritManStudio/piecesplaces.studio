@@ -20,11 +20,11 @@ export default async function StaffLayout({
           }}
         />
         <SidebarInset className="min-w-0 bg-zinc-50">
-          <header className="sticky top-0 z-20 flex h-14 items-center gap-3 border-b border-border bg-background/95 px-3 backdrop-blur supports-backdrop-filter:bg-background/80 md:hidden">
+          <header className="sticky top-0 z-20 flex h-14 items-center gap-3 border-b border-border bg-background/95 px-3 pt-[env(safe-area-inset-top)] backdrop-blur supports-backdrop-filter:bg-background/80 md:hidden">
             <SidebarTrigger className="size-10 shrink-0" />
             <span className="truncate text-base font-semibold">Pieces Places</span>
           </header>
-          <main className="mx-auto w-full max-w-5xl flex-1 px-3 py-4 md:px-4 md:py-6">
+          <main className="mx-auto w-full max-w-5xl flex-1 px-3 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] md:px-4 md:py-6">
             {children}
           </main>
         </SidebarInset>
