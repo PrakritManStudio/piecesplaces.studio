@@ -7,6 +7,11 @@ export function formatThb(satang: number) {
   }).format(satang / 100);
 }
 
+/** Amount string for `<input>` editing (no currency symbol). */
+export function satangToThbInput(satang: number) {
+  return (satang / 100).toFixed(satang % 100 === 0 ? 0 : 2);
+}
+
 /** Parse a THB amount string (e.g. "1500.50") into satang. Returns null if invalid. */
 export function parseThbToSatang(raw: string): number | null {
   const n = Number(raw.replace(/,/g, "").trim());
