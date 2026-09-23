@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { z } from "zod";
 
+import { JobTagPicker } from "@/components/job-tag-picker";
 import { SplitTemplateManager } from "@/components/split-template-manager";
 import { Button } from "@/components/ui/button";
 import {
@@ -46,6 +47,7 @@ const jobFormSchema = z
     customerName: z.string(),
     styleNote: z.string(),
     serviceType: z.enum(["tattoo", "nail", "lash", "class", "other"]),
+    tagIds: z.array(z.string()),
   })
   .superRefine((value, ctx) => {
     if (value.artistPct + value.referralPct > 100) {
@@ -72,6 +74,7 @@ export default function NewJobPage() {
   const qc = useQueryClient();
   const users = useQuery(trpc.user.list.queryOptions());
   const guests = useQuery(trpc.guestProfile.list.queryOptions());
+  const tags = useQuery(trpc.tag.list.queryOptions());
   const me = useQuery(trpc.user.me.queryOptions());
   const [submitError, setSubmitError] = useState<string | null>(null);
 
@@ -99,6 +102,7 @@ export default function NewJobPage() {
       customerName: "",
       styleNote: "",
       serviceType: "tattoo" as ServiceType,
+      tagIds: [] as string[],
     } satisfies JobFormValues,
     validators: {
       onSubmit: jobFormSchema,
@@ -116,6 +120,7 @@ export default function NewJobPage() {
         artistPct: value.artistPct,
         referralPct: value.engagement === "none" ? value.referralPct : 0,
         collaboratorIds: [] as string[],
+        tagIds: value.tagIds,
       };
 
       if (value.engagement === "none") {
@@ -481,6 +486,19 @@ export default function NewJobPage() {
                   value={field.state.value}
                   onBlur={field.handleBlur}
                   onChange={(e) => field.handleChange(e.target.value)}
+                />
+              </Field>
+            )}
+          </form.Field>
+
+          <form.Field name="tagIds">
+            {(field) => (
+              <Field>
+                <FieldLabel>Tags</FieldLabel>
+                <JobTagPicker
+                  options={tags.data ?? []}
+                  value={field.state.value}
+                  onChange={(next) => field.handleChange(next)}
                 />
               </Field>
             )}

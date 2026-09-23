@@ -6,6 +6,7 @@ import { useParams } from "next/navigation";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { JobTagPicker, TagBadge } from "@/components/job-tag-picker";
 import { PAYMENT_KINDS } from "@/domain/split";
 import type { PaymentKind } from "@/generated/prisma/enums";
 import { formatJobCode } from "@/lib/job-code";
@@ -34,7 +35,9 @@ export default function JobDetailPage() {
   const qc = useQueryClient();
   const job = useQuery(trpc.job.byId.queryOptions({ id }));
   const me = useQuery(trpc.user.me.queryOptions());
+  const tags = useQuery(trpc.tag.list.queryOptions());
   const [msg, setMsg] = useState<string | null>(null);
+  const [tagDraft, setTagDraft] = useState<string[] | null>(null);
 
   const invalidate = async () => {
     await qc.invalidateQueries(trpc.job.byId.queryFilter({ id }));
@@ -50,6 +53,15 @@ export default function JobDetailPage() {
   const requestClose = useMutation(
     trpc.job.requestClose.mutationOptions({
       onSuccess: invalidate,
+      onError: (e) => setMsg(e.message),
+    }),
+  );
+  const setTags = useMutation(
+    trpc.job.setTags.mutationOptions({
+      onSuccess: async () => {
+        setTagDraft(null);
+        await invalidate();
+      },
       onError: (e) => setMsg(e.message),
     }),
   );
@@ -105,10 +117,72 @@ export default function JobDetailPage() {
             Artist {j.artistPct}% / Referral {j.referralPct}% / Shop{" "}
             {100 - j.artistPct - j.referralPct}%
           </p>
+          {j.tags.length > 0 ? (
+            <div className="mt-2 flex flex-wrap gap-1">
+              {j.tags.map((jt) => (
+                <TagBadge key={jt.tag.id} name={jt.tag.name} color={jt.tag.color} />
+              ))}
+            </div>
+          ) : null}
         </div>
       </div>
 
       {msg ? <p className="text-sm text-destructive">{msg}</p> : null}
+
+      {j.canEdit ? (
+        <section className="space-y-3 rounded-lg border border-border bg-background p-4">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h2 className="font-medium">Tags</h2>
+            {tagDraft ? (
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setTagDraft(null)}
+                >
+                  ยกเลิก
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  disabled={setTags.isPending}
+                  onClick={() => {
+                    setMsg(null);
+                    setTags.mutate({ jobId: id, tagIds: tagDraft });
+                  }}
+                >
+                  บันทึก tags
+                </Button>
+              </div>
+            ) : (
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={() => setTagDraft(j.tags.map((jt) => jt.tag.id))}
+              >
+                แก้ไข tags
+              </Button>
+            )}
+          </div>
+          {tagDraft ? (
+            <JobTagPicker
+              options={tags.data ?? []}
+              value={tagDraft}
+              onChange={setTagDraft}
+            />
+          ) : j.tags.length === 0 ? (
+            <p className="text-sm text-muted-foreground">ยังไม่ได้ติด tag</p>
+          ) : (
+            <div className="flex flex-wrap gap-1">
+              {j.tags.map((jt) => (
+                <TagBadge key={jt.tag.id} name={jt.tag.name} color={jt.tag.color} />
+              ))}
+            </div>
+          )}
+        </section>
+      ) : null}
 
       <section className="space-y-3 rounded-lg border border-border bg-background p-4">
         <h2 className="font-medium">รายการเงิน</h2>

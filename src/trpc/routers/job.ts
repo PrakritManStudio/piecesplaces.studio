@@ -26,6 +26,7 @@ const jobBase = z.object({
   artistPct: pct,
   referralPct: pct,
   collaboratorIds: z.array(id).default([]),
+  tagIds: z.array(id).default([]),
 });
 
 const jobInput = z.discriminatedUnion("guestEngagement", [
@@ -87,6 +88,11 @@ export const jobRouter = createTRPCRouter({
       z.object({
         scope: z.enum(["mine", "all"]).default("mine"),
         status: z.enum(JobStatus).optional(),
+        ownerUserId: id.optional(),
+        ownerGuestId: id.optional(),
+        tagIds: z.array(id).default([]),
+        scheduledFrom: z.coerce.date().optional(),
+        scheduledTo: z.coerce.date().optional(),
       }),
     )
     .query(({ ctx, input }) => {
@@ -97,6 +103,15 @@ export const jobRouter = createTRPCRouter({
       return ctx.prisma.job.findMany({
         where: {
           status: input.status,
+          ownerUserId: input.ownerUserId,
+          ownerGuestId: input.ownerGuestId,
+          scheduledAt: {
+            gte: input.scheduledFrom,
+            lt: input.scheduledTo,
+          },
+          ...(input.tagIds.length > 0 && {
+            tags: { some: { tagId: { in: input.tagIds } } },
+          }),
           ...(input.scope === "mine" && {
             OR: [
               { ownerUserId: uid },
@@ -107,9 +122,12 @@ export const jobRouter = createTRPCRouter({
           }),
         },
         include: {
-          ownerUser: { select: { name: true } },
-          ownerGuest: { select: { name: true } },
+          ownerUser: { select: { id: true, name: true } },
+          ownerGuest: { select: { id: true, name: true } },
           referralUser: { select: { name: true } },
+          tags: {
+            include: { tag: { select: { id: true, name: true, color: true } } },
+          },
         },
         orderBy: { scheduledAt: "desc" },
         take: 200,
@@ -126,6 +144,9 @@ export const jobRouter = createTRPCRouter({
         referralUser: { select: { id: true, name: true } },
         splitTemplate: { select: { id: true, label: true } },
         collaborators: { include: { user: { select: { id: true, name: true } } } },
+        tags: {
+          include: { tag: { select: { id: true, name: true, color: true, active: true } } },
+        },
         payments: {
           include: {
             createdBy: { select: { name: true } },
@@ -185,8 +206,15 @@ export const jobRouter = createTRPCRouter({
     const data = toJobData(input);
     const collaboratorIds = new Set(input.collaboratorIds);
     if (data.ownerUserId !== ctx.user.id) collaboratorIds.add(ctx.user.id);
+    const tagIds = [...new Set(input.tagIds)];
 
     return ctx.prisma.$transaction(async (tx) => {
+      if (tagIds.length > 0) {
+        const active = await tx.tag.count({
+          where: { id: { in: tagIds }, active: true },
+        });
+        if (active !== tagIds.length) badRequest("มี tag ที่ไม่พร้อมใช้งาน");
+      }
       const agg = await tx.job.aggregate({ _max: { jobNo: true } });
       return tx.job.create({
         data: {
@@ -195,6 +223,9 @@ export const jobRouter = createTRPCRouter({
           createdById: ctx.user.id,
           collaborators: {
             create: [...collaboratorIds].map((userId) => ({ userId })),
+          },
+          tags: {
+            create: tagIds.map((tagId) => ({ tagId })),
           },
         },
       });
@@ -220,13 +251,53 @@ export const jobRouter = createTRPCRouter({
       }
 
       return ctx.prisma.$transaction(async (tx) => {
+        const tagIds = [...new Set(input.data.tagIds)];
+        if (tagIds.length > 0) {
+          const active = await tx.tag.count({
+            where: { id: { in: tagIds }, active: true },
+          });
+          if (active !== tagIds.length) badRequest("มี tag ที่ไม่พร้อมใช้งาน");
+        }
         await tx.jobCollaborator.deleteMany({ where: { jobId: input.id } });
+        await tx.jobTag.deleteMany({ where: { jobId: input.id } });
         return tx.job.update({
           where: { id: input.id },
           data: {
             ...data,
             collaborators: {
               create: [...new Set(input.data.collaboratorIds)].map((userId) => ({ userId })),
+            },
+            tags: {
+              create: tagIds.map((tagId) => ({ tagId })),
+            },
+          },
+        });
+      }, TX_OPTIONS);
+    }),
+
+  setTags: protectedProcedure
+    .input(z.object({ jobId: id, tagIds: z.array(id).default([]) }))
+    .mutation(async ({ ctx, input }) => {
+      await loadJob(ctx, input.jobId, "edit");
+      const tagIds = [...new Set(input.tagIds)];
+      return ctx.prisma.$transaction(async (tx) => {
+        if (tagIds.length > 0) {
+          const active = await tx.tag.count({
+            where: { id: { in: tagIds }, active: true },
+          });
+          if (active !== tagIds.length) badRequest("มี tag ที่ไม่พร้อมใช้งาน");
+        }
+        await tx.jobTag.deleteMany({ where: { jobId: input.jobId } });
+        if (tagIds.length > 0) {
+          await tx.jobTag.createMany({
+            data: tagIds.map((tagId) => ({ jobId: input.jobId, tagId })),
+          });
+        }
+        return tx.job.findUniqueOrThrow({
+          where: { id: input.jobId },
+          include: {
+            tags: {
+              include: { tag: { select: { id: true, name: true, color: true } } },
             },
           },
         });
