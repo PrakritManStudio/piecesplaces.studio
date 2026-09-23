@@ -341,8 +341,8 @@ function TemplateEditorForm(props: {
       >
         <FieldGroup>
           <form.Field
-            name="label"
-            children={(field) => {
+            name="label">
+            {(field) => {
               const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
               return (
                 <Field data-invalid={isInvalid}>
@@ -360,11 +360,11 @@ function TemplateEditorForm(props: {
                 </Field>
               );
             }}
-          />
+          </form.Field>
 
           <form.Field
-            name="serviceType"
-            children={(field) => {
+            name="serviceType">
+            {(field) => {
               const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
               return (
                   <Field data-invalid={isInvalid}>
@@ -387,12 +387,12 @@ function TemplateEditorForm(props: {
                   </Field>
               );
             }}
-          />
+          </form.Field>
 
           <div className="grid grid-cols-2 gap-3">
             <form.Field
-              name="artistPct"
-              children={(field) => {
+              name="artistPct">
+              {(field) => {
                 const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
                 return (
                   <Field data-invalid={isInvalid}>
@@ -412,10 +412,10 @@ function TemplateEditorForm(props: {
                   </Field>
                 );
               }}
-            />
+            </form.Field>
             <form.Field
-              name="referralPct"
-              children={(field) => {
+              name="referralPct">
+              {(field) => {
                 const disabled = props.engagement !== "none";
                 const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
                 return (
@@ -440,12 +440,12 @@ function TemplateEditorForm(props: {
                   </Field>
                 );
               }}
-            />
+            </form.Field>
           </div>
 
           <form.Subscribe
-            selector={(state) => [state.values.artistPct, state.values.referralPct] as const}
-            children={([artistPct, referralPct]) => (
+            selector={(state) => [state.values.artistPct, state.values.referralPct] as const}>
+            {([artistPct, referralPct]) => (
               <p className="text-sm text-muted-foreground">
                 ร้าน{" "}
                 {Math.max(
@@ -455,7 +455,7 @@ function TemplateEditorForm(props: {
                 %
               </p>
             )}
-          />
+          </form.Subscribe>
         </FieldGroup>
 
         {props.error ? <p className="text-sm text-destructive">{props.error}</p> : null}
