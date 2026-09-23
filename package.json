@@ -17,9 +17,11 @@
     "db:push": "prisma db push",
     "db:seed": "prisma db seed",
     "db:studio": "prisma studio",
-    "auth:generate": "auth generate --config ./src/lib/auth.ts --yes"
+    "auth:generate": "auth generate --config ./src/lib/auth.ts --yes",
+    "r2:ping": "tsx scripts/r2-ping.ts"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1137.0",
     "@base-ui/react": "^1.8.0",
     "@better-auth/prisma-adapter": "^1.7.5",
     "@prisma/adapter-pg": "^7.10.0",
