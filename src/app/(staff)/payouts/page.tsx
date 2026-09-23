@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { PAYOUT_KIND_LABELS, PAYOUT_STATUS_LABELS } from "@/lib/labels";
 import { formatThb } from "@/lib/money";
 import { useTRPC } from "@/trpc/client";
 
@@ -74,7 +75,7 @@ export default function PayoutsPage() {
             <h2 className="font-medium">รอบ 1 / 16</h2>
             <div className="flex flex-wrap items-end gap-2 text-sm">
               <label>
-                <span className="text-muted-foreground">cycleDate</span>
+                <span className="text-muted-foreground">วันรอบจ่าย</span>
                 <input
                   className="mt-1 block rounded-md border border-input bg-background px-2 py-1.5"
                   placeholder={upcoming.data ?? "YYYY-MM-DD"}
@@ -111,9 +112,9 @@ export default function PayoutsPage() {
                 <li key={b.id} className="space-y-2 px-4 py-3">
                   <div className="flex flex-wrap justify-between gap-2">
                     <span>
-                      {b.user.name} · {b.kind} · {formatThb(b.totalSatang)}
+                      {b.user.name} · {PAYOUT_KIND_LABELS[b.kind]} · {formatThb(b.totalSatang)}
                     </span>
-                    <span className="text-muted-foreground">{b.status}</span>
+                    <span className="text-muted-foreground">{PAYOUT_STATUS_LABELS[b.status]}</span>
                   </div>
                   <ul className="text-muted-foreground">
                     {b.entitlements.map((e) => (

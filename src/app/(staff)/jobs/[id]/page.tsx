@@ -7,8 +7,26 @@ import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { PAYMENT_KINDS } from "@/domain/split";
+import type { PaymentKind } from "@/generated/prisma/enums";
+import { formatJobCode } from "@/lib/job-code";
+import {
+  CLOSE_OUTCOME_LABELS,
+  ENGAGEMENT_LABELS,
+  JOB_STATUS_LABELS,
+  PAYMENT_KIND_LABELS,
+  PAYOUT_KIND_LABELS,
+  PAYOUT_STATUS_LABELS,
+  REVIEW_STATUS_LABELS,
+  SERVICE_LABELS,
+} from "@/lib/labels";
 import { formatThb, parseThbToSatang } from "@/lib/money";
 import { useTRPC } from "@/trpc/client";
+
+function todayDateInput() {
+  const d = new Date();
+  d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+  return d.toISOString().slice(0, 10);
+}
 
 export default function JobDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -44,8 +62,26 @@ export default function JobDetailPage() {
   const j = job.data;
   const kinds = PAYMENT_KINDS[j.guestEngagement];
   const approvedInbound = j.payments.filter(
-    (p) => p.status === "approved" && (p.kind === "inbound_shop" || p.kind === "inbound_held_by_guest"),
+    (p) =>
+      p.status === "approved" &&
+      (p.kind === "inbound_shop" || p.kind === "inbound_held_by_guest"),
   );
+
+  function submitPayment(kind: PaymentKind, thb: string, note: string, receivedAt: Date) {
+    setMsg(null);
+    const amountSatang = parseThbToSatang(thb);
+    if (amountSatang == null) {
+      setMsg("จำนวนเงินไม่ถูกต้อง");
+      return;
+    }
+    addPayment.mutate({
+      jobId: id,
+      kind,
+      amountSatang,
+      note: note || null,
+      receivedAt,
+    });
+  }
 
   return (
     <div className="space-y-6">
@@ -54,10 +90,16 @@ export default function JobDetailPage() {
           <Link href="/jobs" className="text-sm text-muted-foreground hover:underline">
             ← งาน
           </Link>
-          <h1 className="mt-1 text-2xl font-semibold tracking-tight">{j.title}</h1>
+          <h1 className="mt-1 text-2xl font-semibold tracking-tight">
+            <span className="mr-2 text-muted-foreground">{formatJobCode(j.jobNo)}</span>
+            {j.title}
+          </h1>
           <p className="text-sm text-muted-foreground">
-            {j.ownerUser?.name ?? j.ownerGuest?.name} · {j.status} · {j.serviceType}
-            {j.guestEngagement !== "none" ? ` · ${j.guestEngagement}` : ""}
+            {j.ownerUser?.name ?? j.ownerGuest?.name} · {JOB_STATUS_LABELS[j.status]} ·{" "}
+            {SERVICE_LABELS[j.serviceType]}
+            {j.guestEngagement !== "none"
+              ? ` · ${ENGAGEMENT_LABELS[j.guestEngagement]}`
+              : ""}
           </p>
           <p className="text-sm text-muted-foreground">
             Artist {j.artistPct}% / Referral {j.referralPct}% / Shop{" "}
@@ -74,10 +116,13 @@ export default function JobDetailPage() {
           {j.payments.map((p) => (
             <li key={p.id} className="flex flex-wrap justify-between gap-2 py-2">
               <span>
-                {p.kind} · {formatThb(p.amountSatang)}
-                {p.note ? ` — ${p.note}` : ""}
+                {PAYMENT_KIND_LABELS[p.kind]} · {formatThb(p.amountSatang)}
+                {p.note ? ` - ${p.note}` : ""}
+                <span className="mt-0.5 block text-muted-foreground">
+                  {new Date(p.receivedAt).toLocaleString("th-TH")}
+                </span>
               </span>
-              <span className="text-muted-foreground">{p.status}</span>
+              <span className="text-muted-foreground">{REVIEW_STATUS_LABELS[p.status]}</span>
             </li>
           ))}
           {j.payments.length === 0 ? (
@@ -89,15 +134,7 @@ export default function JobDetailPage() {
           <PaymentForm
             kinds={[...kinds]}
             pending={addPayment.isPending}
-            onSubmit={(kind, thb, note) => {
-              setMsg(null);
-              const amountSatang = parseThbToSatang(thb);
-              if (amountSatang == null) {
-                setMsg("จำนวนเงินไม่ถูกต้อง");
-                return;
-              }
-              addPayment.mutate({ jobId: id, kind, amountSatang, note: note || null });
-            }}
+            onSubmit={submitPayment}
           />
         ) : null}
 
@@ -107,7 +144,7 @@ export default function JobDetailPage() {
             <ul className="text-sm text-muted-foreground">
               {j.settlement.map((s) => (
                 <li key={s.kind}>
-                  {s.kind}: ต้อง {formatThb(s.dueSatang)} · อนุมัติแล้ว{" "}
+                  {PAYMENT_KIND_LABELS[s.kind]}: ต้อง {formatThb(s.dueSatang)} · อนุมัติแล้ว{" "}
                   {formatThb(s.approvedSatang)} · รอ {formatThb(s.pendingSatang)}
                 </li>
               ))}
@@ -116,15 +153,7 @@ export default function JobDetailPage() {
               <PaymentForm
                 kinds={j.settlement.map((s) => s.kind)}
                 pending={addPayment.isPending}
-                onSubmit={(kind, thb, note) => {
-                  setMsg(null);
-                  const amountSatang = parseThbToSatang(thb);
-                  if (amountSatang == null) {
-                    setMsg("จำนวนเงินไม่ถูกต้อง");
-                    return;
-                  }
-                  addPayment.mutate({ jobId: id, kind, amountSatang, note: note || null });
-                }}
+                onSubmit={submitPayment}
               />
             ) : null}
           </div>
@@ -188,7 +217,7 @@ export default function JobDetailPage() {
           {j.closes.map((c) => (
             <div key={c.id} className="flex justify-between gap-2">
               <span>
-                {c.outcome} · {c.status}
+                {CLOSE_OUTCOME_LABELS[c.outcome]} · {REVIEW_STATUS_LABELS[c.status]}
                 {c.baseSatang != null ? ` · base ${formatThb(c.baseSatang)}` : ""}
               </span>
               <span className="text-muted-foreground">{c.requestedBy.name}</span>
@@ -199,14 +228,16 @@ export default function JobDetailPage() {
 
       {j.entitlements.length > 0 ? (
         <section className="space-y-2 rounded-lg border border-border bg-background p-4 text-sm">
-          <h2 className="font-medium">Entitlements</h2>
+          <h2 className="font-medium">สิทธิรับเงิน</h2>
           {j.entitlements.map((e) => (
             <div key={e.id} className="flex justify-between gap-2">
               <span>
                 {e.user.name} · {e.role} · {formatThb(e.amountSatang)}
               </span>
               <span className="text-muted-foreground">
-                {e.payoutBatch ? `${e.payoutBatch.kind}/${e.payoutBatch.status}` : "ค้างจ่าย"}
+                {e.payoutBatch
+                  ? `${PAYOUT_KIND_LABELS[e.payoutBatch.kind]}/${PAYOUT_STATUS_LABELS[e.payoutBatch.status]}`
+                  : "ค้างจ่าย"}
               </span>
             </div>
           ))}
@@ -217,22 +248,24 @@ export default function JobDetailPage() {
 }
 
 function PaymentForm(props: {
-  kinds: string[];
+  kinds: PaymentKind[];
   pending: boolean;
-  onSubmit: (kind: "inbound_shop" | "inbound_held_by_guest" | "shop_cut_from_guest" | "payout_to_guest" | "refund_to_customer", thb: string, note: string) => void;
+  onSubmit: (kind: PaymentKind, thb: string, note: string, receivedAt: Date) => void;
 }) {
-  const [kind, setKind] = useState(props.kinds[0] ?? "inbound_shop");
+  const [kind, setKind] = useState<PaymentKind>(props.kinds[0] ?? "inbound_shop");
   const [thb, setThb] = useState("");
   const [note, setNote] = useState("");
+  const [receivedAt, setReceivedAt] = useState(todayDateInput);
 
   return (
     <form
       className="flex flex-wrap items-end gap-2 border-t border-border pt-3"
       onSubmit={(e) => {
         e.preventDefault();
-        props.onSubmit(kind as Parameters<typeof props.onSubmit>[0], thb, note);
+        props.onSubmit(kind, thb, note, new Date(receivedAt));
         setThb("");
         setNote("");
+        setReceivedAt(todayDateInput());
       }}
     >
       <label className="text-sm">
@@ -240,14 +273,24 @@ function PaymentForm(props: {
         <select
           className="mt-1 block rounded-md border border-input bg-background px-2 py-1.5 text-sm"
           value={kind}
-          onChange={(e) => setKind(e.target.value)}
+          onChange={(e) => setKind(e.target.value as PaymentKind)}
         >
           {props.kinds.map((k) => (
             <option key={k} value={k}>
-              {k}
+              {PAYMENT_KIND_LABELS[k]}
             </option>
           ))}
         </select>
+      </label>
+      <label className="text-sm">
+        <span className="text-muted-foreground">วันที่รับเงิน</span>
+        <input
+          className="mt-1 block rounded-md border border-input bg-background px-2 py-1.5 text-sm"
+          type="date"
+          required
+          value={receivedAt}
+          onChange={(e) => setReceivedAt(e.target.value)}
+        />
       </label>
       <label className="text-sm">
         <span className="text-muted-foreground">บาท</span>

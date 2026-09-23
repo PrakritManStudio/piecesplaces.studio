@@ -5,7 +5,12 @@ import Link from "next/link";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import { formatThb } from "@/lib/money";
+import { formatJobCode } from "@/lib/job-code";
+import {
+  ENGAGEMENT_LABELS,
+  JOB_STATUS_LABELS,
+  SERVICE_LABELS,
+} from "@/lib/labels";
 import { useTRPC } from "@/trpc/client";
 
 export default function JobsPage() {
@@ -55,21 +60,23 @@ export default function JobsPage() {
               className="flex flex-wrap items-baseline justify-between gap-2 px-4 py-3 hover:bg-muted/50"
             >
               <div>
-                <p className="font-medium">{job.title}</p>
+                <p className="font-medium">
+                  <span className="mr-2 text-muted-foreground">{formatJobCode(job.jobNo)}</span>
+                  {job.title}
+                </p>
                 <p className="text-sm text-muted-foreground">
                   {job.ownerUser?.name ?? job.ownerGuest?.name ?? "—"} ·{" "}
-                  {job.serviceType}
-                  {job.guestEngagement !== "none" ? ` · Guest ${job.guestEngagement}` : ""}
+                  {SERVICE_LABELS[job.serviceType]}
+                  {job.guestEngagement !== "none"
+                    ? ` · ${ENGAGEMENT_LABELS[job.guestEngagement]}`
+                    : ""}
                 </p>
               </div>
               <div className="text-right text-sm">
-                <p>{job.status}</p>
+                <p>{JOB_STATUS_LABELS[job.status]}</p>
                 <p className="text-muted-foreground">
                   {new Date(job.scheduledAt).toLocaleString("th-TH")}
                 </p>
-                {job.estimatedTotalSatang != null ? (
-                  <p className="text-muted-foreground">{formatThb(job.estimatedTotalSatang)}</p>
-                ) : null}
               </div>
             </Link>
           </li>

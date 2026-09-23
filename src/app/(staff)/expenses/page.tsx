@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { REVIEW_STATUS_LABELS } from "@/lib/labels";
 import { formatThb, parseThbToSatang } from "@/lib/money";
 import { useTRPC } from "@/trpc/client";
 
@@ -116,7 +117,7 @@ export default function ExpensesPage() {
               </div>
               <div className="text-right">
                 <p>{formatThb(e.amountSatang)}</p>
-                <p className="text-muted-foreground">{e.status}</p>
+                <p className="text-muted-foreground">{REVIEW_STATUS_LABELS[e.status]}</p>
               </div>
             </li>
           ))}

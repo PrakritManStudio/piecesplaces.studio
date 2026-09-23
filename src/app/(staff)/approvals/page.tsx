@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { CLOSE_OUTCOME_LABELS, PAYMENT_KIND_LABELS } from "@/lib/labels";
 import { formatThb } from "@/lib/money";
 import { useTRPC } from "@/trpc/client";
 
@@ -76,7 +77,7 @@ export default function ApprovalsPage() {
                   {c.job.title}
                 </Link>
                 <p className="text-muted-foreground">
-                  {c.outcome} · ขอโดย {c.requestedBy.name}
+                  {CLOSE_OUTCOME_LABELS[c.outcome]} · ขอโดย {c.requestedBy.name}
                   {c.depositPayment
                     ? ` · มัดจำ ${formatThb(c.depositPayment.amountSatang)}`
                     : ""}
@@ -116,7 +117,7 @@ export default function ApprovalsPage() {
                   {p.job.title}
                 </Link>
                 <p className="text-muted-foreground">
-                  {p.kind} · {formatThb(p.amountSatang)} · {p.createdBy.name}
+                  {PAYMENT_KIND_LABELS[p.kind]} · {formatThb(p.amountSatang)} · {p.createdBy.name}
                 </p>
               </div>
               <div className="flex gap-2">
