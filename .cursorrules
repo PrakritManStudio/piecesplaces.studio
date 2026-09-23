@@ -1,0 +1,20 @@
+# Commit messages (Generate Commit Message)
+
+เมื่อ Cursor สร้าง Git commit message สำหรับ repo นี้ ให้ทำตามนี้เสมอ:
+
+1. **เขียนเป็นภาษาไทย** ทั้ง subject และ body — เพื่อให้ dev คนไทยที่อ่านอังกฤษไม่คล่องเข้าใจได้ทันที
+2. **อย่าแปลคำศัพท์เฉพาะ** คงชื่อเทคนิค/เครื่องมือ/API ตามเดิม เช่น Prisma, Better Auth, shadcn, Next.js, PostgreSQL, migrate, plugin, schema, adapter, env
+3. **สั้น ชัด เน้นเหตุผล** — subject 1 บรรทัด สรุปว่าทำไม/ได้อะไร ไม่ไล่รายการไฟล์จาก diff
+4. **รูปแบบ** — subject กระชับ; ใส่ body สั้นๆ เมื่อจำเป็นเท่านั้น
+
+## ตัวอย่าง
+
+ดี:
+- ตั้งค่า Prisma 7 กับ PostgreSQL และ Better Auth พร้อม admin plugin
+- สลับ shadcn จาก Radix ไปใช้ Base UI
+- เพิ่ม T3 Env เพื่อ validate env ตอน build
+
+ไม่ดี:
+- Initialize Prisma 7, Better Auth with admin, and shadcn Base UI
+- Update files and fix stuff
+- แปลทุกคำ เช่น "การย้ายถิ่นฐานฐานข้อมูล" แทน migrate

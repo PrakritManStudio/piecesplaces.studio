@@ -1,0 +1,12 @@
+---
+description: Commit messages เป็นภาษาไทย (คงคำศัพท์เทคนิค)
+alwaysApply: true
+---
+
+# Commit messages
+
+เมื่อสร้างหรือแนะนำ Git commit message:
+
+- เขียนเป็น**ภาษาไทย** ให้ dev ที่อ่านอังกฤษไม่คล่องเข้าใจได้
+- **อย่าแปลคำศัพท์เฉพาะ** (Prisma, Better Auth, shadcn, Next.js, migrate, plugin, schema ฯลฯ)
+- Subject สั้น ชัด เน้นเหตุผล ไม่ไล่รายการไฟล์
