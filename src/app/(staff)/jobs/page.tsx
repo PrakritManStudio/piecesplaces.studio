@@ -43,7 +43,9 @@ export default function JobsPage() {
               ))}
             </div>
           ) : null}
-          <Button render={<Link href="/jobs/new" />}>สร้างงาน</Button>
+          <Button nativeButton={false} render={<Link href="/jobs/new" />}>
+            สร้างงาน
+          </Button>
         </div>
       </div>
 
