@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 
 import { SplitTemplateManager } from "@/components/split-template-manager";
+import { TagManager } from "@/components/tag-manager";
 import type { GuestEngagement, ServiceType } from "@/generated/prisma/enums";
 import { ENGAGEMENT_LABELS, SERVICE_LABELS } from "@/lib/labels";
 import { useTRPC } from "@/trpc/client";
@@ -27,7 +28,7 @@ export default function SettingsPage() {
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">ตั้งค่า</h1>
         <p className="text-sm text-muted-foreground">
-          จัดการประเภทงานและหมวดแบ่ง % ที่ใช้ตอนสร้างงาน
+          จัดการประเภทงาน หมวดแบ่ง % และ tags ที่ใช้กับงาน
         </p>
       </div>
 
@@ -44,6 +45,11 @@ export default function SettingsPage() {
         <p className="text-xs text-muted-foreground">
           ประเภทงานเป็นค่าคงที่ในระบบ เปลี่ยนชื่อแสดงผลได้จากโค้ด labels
         </p>
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="font-medium">Tags</h2>
+        <TagManager />
       </section>
 
       <section className="space-y-3">
