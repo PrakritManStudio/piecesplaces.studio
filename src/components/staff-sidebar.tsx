@@ -83,13 +83,15 @@ export function StaffSidebar(props: {
                 return (
                   <SidebarMenuItem key={l.href}>
                     <SidebarMenuButton
+                      asChild
                       isActive={active}
                       size="lg"
                       className={cn("h-11 md:h-8", active && "bg-sidebar-accent font-medium")}
-                      render={<Link href={l.href} onClick={closeMobile} />}
                     >
-                      <Icon />
-                      <span>{l.label}</span>
+                      <Link href={l.href} onClick={closeMobile}>
+                        <Icon />
+                        <span>{l.label}</span>
+                      </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 );

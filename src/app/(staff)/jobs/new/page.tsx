@@ -169,8 +169,8 @@ export default function NewJobPage() {
       >
         <FieldGroup>
           <form.Field
-            name="engagement"
-            children={(field) => (
+            name="engagement">
+            {(field) => (
               <Field>
                 <FieldLabel htmlFor={field.name}>ประเภท</FieldLabel>
                 <select
@@ -197,7 +197,7 @@ export default function NewJobPage() {
                 </select>
               </Field>
             )}
-          />
+          </form.Field>
 
           <form.Subscribe
             selector={(state) =>
@@ -207,8 +207,8 @@ export default function NewJobPage() {
                 state.values.artistPct,
                 state.values.referralPct,
               ] as const
-            }
-            children={([engagement, templateId]) => (
+            }>
+            {([engagement, templateId]) => (
               <SplitTemplateManager
                 engagement={engagement}
                 selectedId={templateId}
@@ -228,11 +228,11 @@ export default function NewJobPage() {
                 }}
               />
             )}
-          />
+          </form.Subscribe>
 
           <form.Field
-            name="title"
-            children={(field) => {
+            name="title">
+            {(field) => {
               const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
               return (
                 <Field data-invalid={isInvalid}>
@@ -250,11 +250,11 @@ export default function NewJobPage() {
                 </Field>
               );
             }}
-          />
+          </form.Field>
 
           <form.Field
-            name="scheduledAt"
-            children={(field) => {
+            name="scheduledAt">
+            {(field) => {
               const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
               return (
                 <Field data-invalid={isInvalid}>
@@ -273,16 +273,16 @@ export default function NewJobPage() {
                 </Field>
               );
             }}
-          />
+          </form.Field>
 
           <form.Subscribe
-            selector={(state) => state.values.engagement}
-            children={(engagement) =>
+            selector={(state) => state.values.engagement}>
+            {(engagement) =>
               engagement === "none" ? (
                 <>
                   <form.Field
-                    name="ownerUserId"
-                    children={(field) => {
+                    name="ownerUserId">
+                    {(field) => {
                       const value = field.state.value || defaultOwnerId;
                       const isInvalid =
                         field.state.meta.isTouched && !field.state.meta.isValid;
@@ -309,10 +309,10 @@ export default function NewJobPage() {
                         </Field>
                       );
                     }}
-                  />
+                  </form.Field>
                   <form.Field
-                    name="referralUserId"
-                    children={(field) => (
+                    name="referralUserId">
+                    {(field) => (
                       <Field>
                         <FieldLabel htmlFor={field.name}>Referral (ถ้ามี)</FieldLabel>
                         <select
@@ -339,12 +339,12 @@ export default function NewJobPage() {
                         <FieldDescription>เลือกได้ถ้ามีผู้แนะนำ</FieldDescription>
                       </Field>
                     )}
-                  />
+                  </form.Field>
                 </>
               ) : (
                 <form.Field
-                  name="ownerGuestId"
-                  children={(field) => {
+                  name="ownerGuestId">
+                  {(field) => {
                     const isInvalid =
                       field.state.meta.isTouched && !field.state.meta.isValid;
                     return (
@@ -371,15 +371,14 @@ export default function NewJobPage() {
                       </Field>
                     );
                   }}
-                />
-              )
-            }
-          />
+                </form.Field>
+              )}
+          </form.Subscribe>
 
           <div className="grid grid-cols-2 gap-3">
             <form.Field
-              name="artistPct"
-              children={(field) => {
+              name="artistPct">
+              {(field) => {
                 const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
                 return (
                   <Field data-invalid={isInvalid}>
@@ -400,13 +399,13 @@ export default function NewJobPage() {
                   </Field>
                 );
               }}
-            />
+            </form.Field>
             <form.Field
-              name="referralPct"
-              children={(field) => (
+              name="referralPct">
+              {(field) => (
                 <form.Subscribe
-                  selector={(state) => state.values.engagement}
-                  children={(engagement) => {
+                  selector={(state) => state.values.engagement}>
+                  {(engagement) => {
                     const disabled = engagement !== "none";
                     const isInvalid =
                       field.state.meta.isTouched && !field.state.meta.isValid;
@@ -433,16 +432,16 @@ export default function NewJobPage() {
                       </Field>
                     );
                   }}
-                />
+                </form.Subscribe>
               )}
-            />
+            </form.Field>
           </div>
 
           <form.Subscribe
             selector={(state) =>
               [state.values.artistPct, state.values.referralPct, state.values.engagement] as const
-            }
-            children={([artistPct, referralPct, engagement]) => (
+            }>
+            {([artistPct, referralPct, engagement]) => (
               <p className="text-sm text-muted-foreground">
                 ร้าน{" "}
                 {shopPct({
@@ -452,11 +451,11 @@ export default function NewJobPage() {
                 % (แก้ได้ต่องานหลังเลือกหมวด)
               </p>
             )}
-          />
+          </form.Subscribe>
 
           <form.Field
-            name="customerName"
-            children={(field) => (
+            name="customerName">
+            {(field) => (
               <Field>
                 <FieldLabel htmlFor={field.name}>ชื่อลูกค้า</FieldLabel>
                 <Input
@@ -468,11 +467,11 @@ export default function NewJobPage() {
                 />
               </Field>
             )}
-          />
+          </form.Field>
 
           <form.Field
-            name="styleNote"
-            children={(field) => (
+            name="styleNote">
+            {(field) => (
               <Field>
                 <FieldLabel htmlFor={field.name}>โน้ตสไตล์</FieldLabel>
                 <Textarea
@@ -485,7 +484,7 @@ export default function NewJobPage() {
                 />
               </Field>
             )}
-          />
+          </form.Field>
         </FieldGroup>
 
         {submitError ? <p className="text-sm text-destructive">{submitError}</p> : null}
