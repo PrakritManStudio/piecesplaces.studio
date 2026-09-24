@@ -23,6 +23,7 @@ import {
   JOB_STATUS_LABELS,
   SERVICE_LABELS,
 } from "@/lib/labels";
+import { staffPath } from "@/lib/staff-paths";
 import { cn } from "@/lib/utils";
 import { useTRPC } from "@/trpc/client";
 
@@ -102,7 +103,7 @@ export default function JobsPage() {
               ))}
             </div>
           ) : null}
-          <Link href="/jobs/new" className={cn(buttonVariants())}>
+          <Link href={staffPath.jobNew} className={cn(buttonVariants())}>
             สร้างงาน
           </Link>
         </div>
@@ -209,12 +210,12 @@ export default function JobsPage() {
             {(jobs.data ?? []).map((job) => (
               <TableRow key={job.id} className="cursor-pointer">
                 <TableCell className="whitespace-nowrap text-muted-foreground">
-                  <Link href={`/jobs/${job.id}`} className="hover:underline">
+                  <Link href={staffPath.job(job.id)} className="hover:underline">
                     {formatJobCode(job.jobNo)}
                   </Link>
                 </TableCell>
                 <TableCell>
-                  <Link href={`/jobs/${job.id}`} className="font-medium hover:underline">
+                  <Link href={staffPath.job(job.id)} className="font-medium hover:underline">
                     {job.title}
                   </Link>
                   <p className="text-xs text-muted-foreground">

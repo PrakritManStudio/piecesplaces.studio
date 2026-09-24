@@ -22,6 +22,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { shopPct } from "@/domain/split";
 import type { GuestEngagement } from "@/generated/prisma/enums";
 import { ENGAGEMENT_LABELS } from "@/lib/labels";
+import { staffPath } from "@/lib/staff-paths";
 import { useTRPC } from "@/trpc/client";
 
 const selectClassName =
@@ -102,7 +103,7 @@ export function JobEditor(props: JobEditorProps) {
     trpc.job.create.mutationOptions({
       onSuccess: async (job) => {
         await qc.invalidateQueries(trpc.job.list.queryFilter());
-        router.push(`/jobs/${job.id}`);
+        router.push(staffPath.job(job.id));
       },
       onError: (e) => setSubmitError(e.message),
     }),
@@ -113,7 +114,7 @@ export function JobEditor(props: JobEditorProps) {
       onSuccess: async (job) => {
         await qc.invalidateQueries(trpc.job.list.queryFilter());
         await qc.invalidateQueries(trpc.job.byId.queryFilter({ id: job.id }));
-        router.push(`/jobs/${job.id}`);
+        router.push(staffPath.job(job.id));
       },
       onError: (e) => setSubmitError(e.message),
     }),
@@ -199,7 +200,7 @@ export function JobEditor(props: JobEditorProps) {
   const guestOptions = useMemo(() => guests.data ?? [], [guests.data]);
   const defaultOwnerId = me.data?.id ?? "";
   const pending = create.isPending || update.isPending;
-  const backHref = props.mode === "edit" ? `/jobs/${props.jobId}` : "/jobs";
+  const backHref = props.mode === "edit" ? staffPath.job(props.jobId) : staffPath.jobs;
 
   return (
     <div className="mx-auto max-w-lg space-y-4">

@@ -21,6 +21,7 @@ import {
   SERVICE_LABELS,
 } from "@/lib/labels";
 import { formatThb, parseThbToSatang, satangToThbInput } from "@/lib/money";
+import { staffPath } from "@/lib/staff-paths";
 import { cn } from "@/lib/utils";
 import { useTRPC } from "@/trpc/client";
 
@@ -125,7 +126,7 @@ export default function JobDetailPage() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <Link href="/jobs" className="text-sm text-muted-foreground hover:underline">
+          <Link href={staffPath.jobs} className="text-sm text-muted-foreground hover:underline">
             ← งาน
           </Link>
           <h1 className="mt-1 text-2xl font-semibold tracking-tight">
@@ -153,7 +154,7 @@ export default function JobDetailPage() {
         </div>
         {j.canEdit ? (
           <Link
-            href={`/jobs/${id}/edit`}
+            href={staffPath.jobEdit(id)}
             className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
           >
             แก้ไขงาน

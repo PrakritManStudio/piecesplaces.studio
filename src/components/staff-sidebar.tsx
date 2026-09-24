@@ -28,15 +28,16 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { authClient } from "@/lib/auth-client";
+import { staffPath } from "@/lib/staff-paths";
 import { cn } from "@/lib/utils";
 
 const links = [
-  { href: "/jobs", label: "งาน", icon: BriefcaseIcon },
-  { href: "/approvals", label: "อนุมัติ", icon: CheckCircleIcon, admin: true },
-  { href: "/payouts", label: "จ่ายช่าง", icon: WalletIcon, admin: true },
-  { href: "/expenses", label: "ค่าใช้จ่าย", icon: ReceiptIcon },
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboardIcon, admin: true },
-  { href: "/settings", label: "ตั้งค่า", icon: SettingsIcon, admin: true },
+  { href: staffPath.jobs, label: "งาน", icon: BriefcaseIcon },
+  { href: staffPath.approvals, label: "อนุมัติ", icon: CheckCircleIcon, admin: true },
+  { href: staffPath.payouts, label: "จ่ายช่าง", icon: WalletIcon, admin: true },
+  { href: staffPath.expenses, label: "ค่าใช้จ่าย", icon: ReceiptIcon },
+  { href: staffPath.dashboard, label: "Dashboard", icon: LayoutDashboardIcon, admin: true },
+  { href: staffPath.settings, label: "ตั้งค่า", icon: SettingsIcon, admin: true },
 ] as const;
 
 export function StaffSidebar(props: {
@@ -59,7 +60,7 @@ export function StaffSidebar(props: {
     <Sidebar collapsible="icon">
       <SidebarHeader className="border-b border-sidebar-border">
         <Link
-          href="/jobs"
+          href={staffPath.jobs}
           onClick={closeMobile}
           className="flex h-12 items-center gap-2 px-3 text-base font-semibold tracking-tight group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0 md:h-10 md:px-2 md:text-sm"
         >
@@ -77,8 +78,8 @@ export function StaffSidebar(props: {
               {visible.map((l) => {
                 const Icon = l.icon;
                 const active =
-                  l.href === "/jobs"
-                    ? pathname === "/jobs" || pathname.startsWith("/jobs/")
+                  l.href === staffPath.jobs
+                    ? pathname === staffPath.jobs || pathname.startsWith(`${staffPath.jobs}/`)
                     : pathname === l.href || pathname.startsWith(`${l.href}/`);
                 return (
                   <SidebarMenuItem key={l.href}>
@@ -112,7 +113,7 @@ export function StaffSidebar(props: {
               onClick={async () => {
                 closeMobile();
                 await authClient.signOut();
-                router.push("/login");
+                router.push(staffPath.login);
                 router.refresh();
               }}
             >

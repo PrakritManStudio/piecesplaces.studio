@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 
 import { JobEditor, toDatetimeLocalValue } from "@/components/job-editor";
+import { staffPath } from "@/lib/staff-paths";
 import { useTRPC } from "@/trpc/client";
 
 export default function EditJobPage() {
@@ -27,7 +28,7 @@ export default function EditJobPage() {
     return (
       <div className="space-y-2">
         <p className="text-sm text-muted-foreground">ไม่มีสิทธิ์แก้ไขงานนี้</p>
-        <Link href={`/jobs/${id}`} className="text-sm underline">
+        <Link href={staffPath.job(id)} className="text-sm underline">
           กลับหน้ารายละเอียด
         </Link>
       </div>
@@ -40,7 +41,7 @@ export default function EditJobPage() {
         <p className="text-sm text-muted-foreground">
           งานที่ส่งปิดหรือปิดแล้ว แก้ได้เฉพาะ admin
         </p>
-        <Link href={`/jobs/${id}`} className="text-sm underline">
+        <Link href={staffPath.job(id)} className="text-sm underline">
           กลับหน้ารายละเอียด
         </Link>
       </div>

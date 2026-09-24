@@ -21,8 +21,7 @@ export const auth = betterAuth({
     "https://tunnel-prakrit-3000.patavee.space",
   ],
   emailAndPassword: {
-    // Temporary staff login until Google OAuth is fully wired.
-    enabled: true,
+    enabled: false,
   },
   socialProviders: {
     ...(googleConfigured
@@ -31,6 +30,7 @@ export const auth = betterAuth({
             prompt: "select_account" as const,
             clientId: env.GOOGLE_CLIENT_ID!,
             clientSecret: env.GOOGLE_CLIENT_SECRET!,
+            disableSignUp: true,
           },
         }
       : {}),

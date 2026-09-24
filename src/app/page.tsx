@@ -1,9 +1,8 @@
-import { redirect } from "next/navigation";
-
-import { requireSession } from "@/lib/session";
-
-/** Old root demo page → staff jobs (or login). */
-export default async function Home() {
-  await requireSession();
-  redirect("/jobs");
+/** Public site root — staff ops live under `/staff`. */
+export default function Home() {
+  return (
+    <main className="flex min-h-full flex-1 flex-col items-center justify-center bg-zinc-50 px-4">
+      <p className="text-sm text-muted-foreground">Pieces Places Studio</p>
+    </main>
+  );
 }

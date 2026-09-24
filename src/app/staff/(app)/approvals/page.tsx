@@ -7,6 +7,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { CLOSE_OUTCOME_LABELS, PAYMENT_KIND_LABELS } from "@/lib/labels";
 import { formatThb } from "@/lib/money";
+import { staffPath } from "@/lib/staff-paths";
 import { useTRPC } from "@/trpc/client";
 
 export default function ApprovalsPage() {
@@ -73,7 +74,7 @@ export default function ApprovalsPage() {
           {(closes.data ?? []).map((c) => (
             <li key={c.id} className="flex flex-wrap items-center justify-between gap-2 px-4 py-3">
               <div>
-                <Link href={`/jobs/${c.job.id}`} className="font-medium hover:underline">
+                <Link href={staffPath.job(c.job.id)} className="font-medium hover:underline">
                   {c.job.title}
                 </Link>
                 <p className="text-muted-foreground">
@@ -113,7 +114,7 @@ export default function ApprovalsPage() {
           {(payments.data ?? []).map((p) => (
             <li key={p.id} className="flex flex-wrap items-center justify-between gap-2 px-4 py-3">
               <div>
-                <Link href={`/jobs/${p.job.id}`} className="font-medium hover:underline">
+                <Link href={staffPath.job(p.job.id)} className="font-medium hover:underline">
                   {p.job.title}
                 </Link>
                 <p className="text-muted-foreground">
